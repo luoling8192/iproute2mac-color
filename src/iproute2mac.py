@@ -18,7 +18,7 @@ import subprocess
 import types
 
 # Version
-VERSION = "1.5.4"
+VERSION = "1.5.5"
 
 # Utilities
 SUDO = "/usr/bin/sudo"

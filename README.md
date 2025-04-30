@@ -1,7 +1,9 @@
-iproute2mac
+iproute2mac-color
 ===========
 
-*CLI wrapper for basic network utilities on macOS, inspired by iproute2 on Linux systems – `ip` and `bridge` commands*
+*CLI wrapper for basic network utilities on macOS, inspired by iproute2 on Linux systems – `ip`, `bridge` and `ss` commands with color support*
+
+> This is a fork of [iproute2mac](https://github.com/brona/iproute2mac) with color support.
 
 Provided functionality is limited and command output is not fully compatible with [iproute2].\
 Goal of this project is to make basic network configuration/debug tasks on macOS easy for admins who already use Linux systems.\
@@ -18,7 +20,8 @@ A) [Preferred] Using [Homebrew](http://brew.sh):
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install iproute2mac
-brew install iproute2mac
+brew tap luoling8192/iproute2mac-color
+brew install iproute2mac-color
 ```
 
 B) Manual installation from HEAD:
@@ -30,6 +33,7 @@ cd /usr/local/
 git clone https://github.com/brona/iproute2mac.git
 ln -s iproute2mac/src/ip.py /usr/local/bin/ip
 ln -s iproute2mac/src/bridge.py /usr/local/bin/bridge
+ln -s iproute2mac/src/ss.py /usr/local/bin/ss
 ```
 
 ## Supported commands / Example usage
@@ -90,6 +94,14 @@ Goal of this utility is to provide compatible CLI with [iproute2], supporting sa
   * List bridges (with pretty print): `bridge -j -p link show`
 
 ## Changelog
+<details open>
+  <summary><b>v1.5.5</b></summary>
+
+- Added color support
+- Added `ss` command
+
+</details>
+
 <details open>
   <summary><b>v1.5.4</b></summary>
 
