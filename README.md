@@ -20,7 +20,7 @@ A) [Preferred] Using [Homebrew](http://brew.sh):
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install iproute2mac
-brew tap luoling8192/iproute2mac-color
+brew tap luoling8192/homebrew-tap
 brew install iproute2mac-color
 ```
 
