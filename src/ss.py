@@ -11,17 +11,16 @@
 """
 
 from iproute2mac import *
-from utils.color import Colors, colorize, perror, init_color
 
 import subprocess
 import sys
 
 # Help message
-def do_help(argv=None, json_print=None, pretty_json=None):
+def do_help(argv=None, json_print=None, pretty_json=None, color=None):
     perror("Usage: ss [ OPTIONS ] [ FILTER ]")
-    perror("       OPTIONS := { -h[elp] | -V[ersion] | -v[erbose] | -n[umeric] | -r[resolve] }")
-    perror("                  { -a[ll] | -l[istening] | -o[options] | -e[stablished] | -c[onnected] }")
-    perror("                  { -p[processes] | -i[info] | -s[ummary] | -j[son] | -p[retty] | -c[olor][=auto|always|never] }")
+    perror("       OPTIONS := { -h[elp] | -V[ersion] | -v[erbose] | -n[umeric] | -r[olve] }")
+    perror("                  { -a[ll] | -l[istening] | -o[ptions] | -e[stablished] | -c[onnected] }")
+    perror("                  { -p[rocesses] | -i[nfo] | -s[ummary] | -j[son] | -p[retty] | -c[olor][=auto|always|never] }")
     perror("                  { -4 | -6 | -t[cp] | -u[dp] | -w[raw] | -x[unix] }")
     perror("       FILTER := [ state TCP-STATE ] [ EXPRESSION ]")
     perror(HELP_ADDENDUM)
@@ -113,12 +112,13 @@ def parse_netstat(res, include_listening=False, resolve=False, only_tcp=False,
     return sockets
 
 
-def format_socket_line(socket, numeric=False):
+def format_socket_line(socket, color, numeric=False):
     """
     Format a socket for display
     
     Args:
         socket (dict): Socket information dictionary
+        color: Color scheme from get_color_scheme
         numeric (bool): Show numeric values only
         
     Returns:
@@ -132,10 +132,10 @@ def format_socket_line(socket, numeric=False):
     local = f"{socket['local_addr']}:{socket['local_port']}"
     peer = f"{socket['peer_addr']}:{socket['peer_port']}"
     
-    # Color the output
-    state_colored = colorize(Colors.YELLOW, state)
-    local_colored = colorize(Colors.CYAN, local)
-    peer_colored = colorize(Colors.GREEN, peer)
+    # Color the output using master branch color scheme
+    state_colored = colorize(color, COLOR_OPERSTATE_UP if state == "ESTAB" else COLOR_OPERSTATE_DOWN, state)
+    local_colored = colorize_ifname(color, local)
+    peer_colored = colorize_inet(color, "inet", peer)
     
     # Format for display, adjust field spacing
     return f"{netid}\t{state_colored}\t{recv_q}\t{send_q}\t{local_colored}\t{peer_colored}"
@@ -169,19 +169,20 @@ def do_summary():
 
 
 @help_msg(do_help)
-def main(argv, json_print=False, pretty_json=False):
+def main(argv):
     """
     Main function for ss command
     
     Args:
         argv (list): Command line arguments
-        json_print (bool): Print output as JSON
-        pretty_json (bool): Format JSON output
         
     Returns:
         bool: Success or failure
     """
     # Options
+    json_print = False
+    pretty_json = False
+    color_mode = "never"
     all_sockets = False
     listening = False
     numeric = False
@@ -202,7 +203,11 @@ def main(argv, json_print=False, pretty_json=False):
         
         # Process options
         if "-color".startswith(argv[0].split("=")[0]):
-            init_color(argv[0])
+            # 'always' is default if -color is set without any value
+            color_mode = argv[0].split("=")[1] if "=" in argv[0] else "always"
+            if color_mode not in ["never", "always", "auto"]:
+                perror('Option "{}" is unknown, try "ss -help".'.format(argv[0]))
+                exit(255)
             argv.pop(0)
         elif "-json".startswith(argv[0]):
             json_print = True
@@ -211,7 +216,7 @@ def main(argv, json_print=False, pretty_json=False):
             pretty_json = True
             argv.pop(0)
         elif "-help".startswith(argv[0]):
-            return do_help(None, json_print, pretty_json)
+            return do_help(None, json_print, pretty_json, None)
         elif "-Version".startswith(argv[0]):
             print("iproute2mac, v" + VERSION)
             exit(0)
@@ -255,6 +260,9 @@ def main(argv, json_print=False, pretty_json=False):
             perror(f'Option "{argv[0]}" is unknown, try "ss -help".')
             exit(255)
     
+    # Get color scheme
+    color_scheme = get_color_scheme(color_mode, json_print)
+    
     # Summary mode - show socket statistics
     if summary:
         return do_summary()
@@ -295,7 +303,7 @@ def main(argv, json_print=False, pretty_json=False):
     # Display results as table
     print_header()
     for socket in sockets:
-        print(format_socket_line(socket, numeric=numeric))
+        print(format_socket_line(socket, color_scheme, numeric=numeric))
     
     return True
 

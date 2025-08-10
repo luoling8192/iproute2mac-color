@@ -11,8 +11,6 @@
 """
 
 from iproute2mac import *
-from utils.color import Colors, colorize, init_color
-
 import re
 import subprocess
 import sys
@@ -99,7 +97,7 @@ def parse_ifconfig(res):
 def do_help(argv=None, json_print=None, pretty_json=None, color=None):
     perror("Usage: bridge [ OPTIONS ] OBJECT { COMMAND | help }")
     perror("where  OBJECT := { link }")
-    perror("       OPTIONS := { -V[ersion] | -j[son] | -p[retty] | -c[olor][=auto|always|never] }")
+    perror("       OPTIONS := { -V[ersion] | -j[son] | -p[retty] | -c[olor] }")
     perror(HELP_ADDENDUM)
     exit(255)
 
@@ -142,7 +140,6 @@ def do_link_show(argv, json_print, pretty_json, color):
     )
     if status:  # unix status
         if res == "":
-            param = dev if dev else "-a"
             perror(param + " not found")
         else:
             perror(res)
@@ -176,8 +173,8 @@ def do_link_show(argv, json_print, pretty_json, color):
             colorize_ifname(color, b["ifname"]),
             ",".join(b["flags"]),
             b["mtu"],
-            colorize(Colors.GREEN, b["master"]),
-            colorize(Colors.YELLOW, b["state"]),
+            b["master"],
+            b["state"],
             b["priority"],
             b["cost"]
         ))

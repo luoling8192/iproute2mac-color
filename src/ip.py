@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 """
   iproute2mac
   CLI wrapper for basic network utilites on Mac OS X.
@@ -10,8 +11,6 @@
 """
 
 from iproute2mac import *
-from utils.color import Colors, colorize, init_color
-
 import ipaddress
 import os
 import re
@@ -115,11 +114,6 @@ def link_addr_show(argv, af, json_print, pretty_json, color, address):
         return json_dump(links, pretty_json)
 
     for l in links:
-        # Colorize interface name and status
-        ifname = colorize(Colors.CYAN, l["ifname"])
-        status = colorize(Colors.GREEN if l["operstate"] == "UP" else Colors.RED, 
-                         l["operstate"])
-        
         print("%d: %s: <%s> mtu %d status %s" % (
             l["ifindex"],
             colorize_ifname(color, l["ifname"]),
@@ -127,18 +121,12 @@ def link_addr_show(argv, af, json_print, pretty_json, color, address):
             l["mtu"],
             colorize_op_state(color, l["operstate"])
         ))
-        
-        # Colorize link info
-        link_type = colorize(Colors.YELLOW, "link/" + l["link_type"])
         print(
             "    link/" + l["link_type"] +
             ((" " + colorize_mac(color, l["address"])) if "address" in l else "") +
             ((" brd " + colorize_mac(color, l["broadcast"])) if "broadcast" in l else "")
         )
-        
-        # Colorize address info
         for a in l.get("addr_info", []):
-            family = colorize(Colors.BLUE, a["family"])
             print(
                 "    %s %s" % (a["family"], colorize_inet(color, a["family"], a["local"])) +
                 ((" peer %s" % colorize_inet(color, a["family"], a["address"])) if "address" in a else "") +
@@ -153,7 +141,7 @@ def link_addr_show(argv, af, json_print, pretty_json, color, address):
 def do_help(argv=None, af=None, json_print=None, pretty_json=None, color=None):
     perror("Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }")
     perror("where  OBJECT := { link | addr | route | neigh }")
-    perror("       OPTIONS := { -V[ersion] | -j[son] | -p[retty] | -c[olor][=auto|always|never] |")
+    perror("       OPTIONS := { -V[ersion] | -j[son] | -p[retty] | -c[olor] |")
     perror("                    -4 | -6 }")
     perror(HELP_ADDENDUM)
     exit(255)
@@ -326,7 +314,7 @@ def do_route_del(argv, af):
         argv.pop(0)
         if len(argv) != 1:
             return False
-        if ":" in prefix or af == 6:
+        if ":" in argv[0] or af == 6:
             options = " ::1 -blackhole"
         else:
             options = " 127.0.0.1 -blackhole"
@@ -622,9 +610,9 @@ def do_neigh_show(argv, af, json_print, pretty_json, color):
             if prefix and ipaddress.ip_address(entry["dst"]) not in prefix:
                 continue
             if cols[1] == "(incomplete)" and cols[4] != "R":
-                entry["state"] = "INCOMPLETE"
+                entry["state"] = ["INCOMPLETE"]
             else:
-                entry["state"] = nd_ll_states[cols[4]]
+                entry["state"] = [nd_ll_states[cols[4]]]
             if len(cols) >= 6 and cols[5] == "R":
                 # iproute2 outputs null in its json
                 entry["router"] = None
@@ -647,9 +635,9 @@ def do_neigh_show(argv, af, json_print, pretty_json, color):
             if prefix and ipaddress.ip_address(entry["dst"]) not in prefix:
                 continue
             if cols[1] == "(incomplete)":
-                entry["state"] = "INCOMPLETE"
+                entry["state"] = ["INCOMPLETE"]
             else:
-                entry["state"] = "REACHABLE"
+                entry["state"] = ["REACHABLE"]
             # router field is ipv6 feature, iproute2 doesn't include router element if not set
             # entry["router"] = False
             neighs.append(entry)
@@ -663,7 +651,7 @@ def do_neigh_show(argv, af, json_print, pretty_json, color):
             ("" if nb["dev"] is None else " dev " + colorize_ifname(color, nb["dev"])) +
             ("" if "lladdr" not in nb else " lladdr " + colorize_mac(color, nb["lladdr"])) +
             (" router" if "router" in nb else "") +
-            " %s" % (nb["state"])
+            " %s" % (nb["state"][0])
         )
 
     return True
